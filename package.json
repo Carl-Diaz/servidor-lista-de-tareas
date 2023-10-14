@@ -1,0 +1,17 @@
+{
+  "name": "servidor-lista-de-tareas",
+  "version": "1.0.0",
+  "description": "Lista de tarea en el Servidor",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "author": "Carlos Diaz",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
