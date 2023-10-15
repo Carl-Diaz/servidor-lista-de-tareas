@@ -1,5 +1,13 @@
-const express = require("express");
-const router = express.Router();
+const manejarErroresListViewRouter = (req, res, next) => {
+  const parametrosValidos = ["completas", "incompletas"];
+  const parametro = req.params[0];
+
+  if (!parametrosValidos.includes(parametro)) {
+    return res.status(400).send("Solicitud incorrecta: Parámetro inválido.");
+  }
+
+  next();
+};
 
 module.exports = (tasks) => {
   router.get("/completas", (req, res) => {
@@ -11,6 +19,9 @@ module.exports = (tasks) => {
     const incompleteTasks = tasks.filter((task) => !task.completed);
     res.json(incompleteTasks);
   });
+
+  // Aplicar el middleware de manejo de errores
+  router.param(0, manejarErroresListViewRouter);
 
   return router;
 };

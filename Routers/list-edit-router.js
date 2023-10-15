@@ -1,5 +1,38 @@
-const express = require("express");
-const router = express.Router();
+const manejarErroresListEditRouter = (req, res, next) => {
+  if (req.method === "POST" && !req.body) {
+    return res
+      .status(400)
+      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para POST.");
+  }
+
+  const { id, description, completed } = req.body;
+  if (
+    req.method === "POST" &&
+    (!id || !description || completed === undefined)
+  ) {
+    return res
+      .status(400)
+      .send(
+        "Solicitud incorrecta: Atributos inválidos o faltantes para crear tareas."
+      );
+  }
+
+  if (req.method === "PUT" && !req.body) {
+    return res
+      .status(400)
+      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para PUT.");
+  }
+
+  if (req.method === "PUT" && Object.keys(req.body).length === 0) {
+    return res
+      .status(400)
+      .send(
+        "Solicitud incorrecta: Atributos inválidos o faltantes para actualizar tareas."
+      );
+  }
+
+  next();
+};
 
 module.exports = (tasks) => {
   router.post("/", (req, res) => {
@@ -35,6 +68,9 @@ module.exports = (tasks) => {
       res.status(404).send("Tarea no encontrada");
     }
   });
+
+  // Aplicar el middleware de manejo de errores
+  router.use(manejarErroresListEditRouter);
 
   return router;
 };
