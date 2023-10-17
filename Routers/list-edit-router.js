@@ -1,76 +1,27 @@
-const manejarErroresListEditRouter = (req, res, next) => {
-  if (req.method === "POST" && !req.body) {
-    return res
-      .status(400)
-      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para POST.");
+const express = require("express");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
+const router = express.Router();
+
+const verifyToken = (req, res, next) => {
+  const token = req.header("Authorization");
+
+  if (!token) {
+    return res.status(401).send("Token no proporcionado");
   }
 
-  const { id, description, completed } = req.body;
-  if (
-    req.method === "POST" &&
-    (!id || !description || completed === undefined)
-  ) {
-    return res
-      .status(400)
-      .send(
-        "Solicitud incorrecta: Atributos inválidos o faltantes para crear tareas."
-      );
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(403).send("Token no válido");
   }
-
-  if (req.method === "PUT" && !req.body) {
-    return res
-      .status(400)
-      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para PUT.");
-  }
-
-  if (req.method === "PUT" && Object.keys(req.body).length === 0) {
-    return res
-      .status(400)
-      .send(
-        "Solicitud incorrecta: Atributos inválidos o faltantes para actualizar tareas."
-      );
-  }
-
-  next();
 };
 
-module.exports = (tasks) => {
-  router.post("/", (req, res) => {
-    // Lógica para crear una nueva tarea
-    const { id, description, completed } = req.body;
-    const newTask = { id, description, completed };
-    tasks.push(newTask);
-    res.send("Nueva tarea creada");
-  });
+router.get("/protected-route", verifyToken, (req, res) => {
+  res.send("Ruta protegida, acceso concedido");
+});
 
-  router.delete("/:id", (req, res) => {
-    // Lógica para eliminar una tarea por su ID
-    const taskId = parseInt(req.params.id);
-    const index = tasks.findIndex((task) => task.id === taskId);
-    if (index !== -1) {
-      tasks.splice(index, 1);
-      res.send("Tarea eliminada correctamente");
-    } else {
-      res.status(404).send("Tarea no encontrada");
-    }
-  });
-
-  router.put("/:id", (req, res) => {
-    // Lógica para actualizar una tarea por su ID
-    const taskId = parseInt(req.params.id);
-    const updatedTask = req.body;
-    const index = tasks.findIndex((task) => task.id === taskId);
-
-    if (index !== -1) {
-      tasks[index] = { ...tasks[index], ...updatedTask };
-      res.send("Tarea actualizada correctamente");
-    } else {
-      res.status(404).send("Tarea no encontrada");
-    }
-  });
-
-  // Aplicar el middleware de manejo de errores
-  router.use(manejarErroresListEditRouter);
-
-  return router;
-};
+module.exports = router;

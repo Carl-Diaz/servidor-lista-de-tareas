@@ -1,27 +1,19 @@
-const manejarErroresListViewRouter = (req, res, next) => {
-  const parametrosValidos = ["completas", "incompletas"];
-  const parametro = req.params[0];
+const express = require("express");
+const { generateAccessToken, authenticateUser } = require("../auth");
 
-  if (!parametrosValidos.includes(parametro)) {
-    return res.status(400).send("Solicitud incorrecta: Parámetro inválido.");
+const router = express.Router();
+
+router.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  const user = authenticateUser(username, password);
+
+  if (!user) {
+    return res.status(401).send("Credenciales incorrectas");
   }
 
-  next();
-};
+  const accessToken = generateAccessToken(username);
+  res.json({ accessToken });
+});
 
-module.exports = (tasks) => {
-  router.get("/completas", (req, res) => {
-    const completedTasks = tasks.filter((task) => task.completed);
-    res.json(completedTasks);
-  });
-
-  router.get("/incompletas", (req, res) => {
-    const incompleteTasks = tasks.filter((task) => !task.completed);
-    res.json(incompleteTasks);
-  });
-
-  // Aplicar el middleware de manejo de errores
-  router.param(0, manejarErroresListViewRouter);
-
-  return router;
-};
+module.exports = router;
