@@ -1,40 +1,49 @@
 const express = require("express");
 const router = express.Router();
 
-module.exports = (tasks) => {
-  router.post("/", (req, res) => {
-    // Lógica para crear una nueva tarea
-    const { id, description, completed } = req.body;
-    const newTask = { id, description, completed };
-    tasks.push(newTask);
-    res.send("Nueva tarea creada");
-  });
+let tasks = [
+  { id: 1, description: "Hacer la compra", completed: false },
+  { id: 2, description: "Lavar la ropa", completed: true },
+  { id: 3, description: "Estudiar para el examen", completed: false },
+];
 
-  router.delete("/:id", (req, res) => {
-    // Lógica para eliminar una tarea por su ID
-    const taskId = parseInt(req.params.id);
-    const index = tasks.findIndex((task) => task.id === taskId);
-    if (index !== -1) {
-      tasks.splice(index, 1);
-      res.send("Tarea eliminada correctamente");
-    } else {
-      res.status(404).send("Tarea no encontrada");
-    }
-  });
+// Ruta para crear una tarea (POST)
+router.post("/", (req, res) => {
+  const newTask = req.body;
+  // Generar un nuevo ID para la tarea
+  newTask.id = tasks.length + 1;
+  tasks.push(newTask);
+  // Mostrar la lista de tareas actualizada después de crear una nueva tarea
+  res.json({ message: "Tarea creada con éxito" });
+});
 
-  router.put("/:id", (req, res) => {
-    // Lógica para actualizar una tarea por su ID
-    const taskId = parseInt(req.params.id);
+// Ruta para eliminar una tarea por ID (DELETE)
+router.delete("/:id", (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const taskIndex = tasks.findIndex((task) => task.id === taskId);
+
+  if (taskIndex === -1) {
+    res.status(404).json({ message: "Tarea no encontrada" });
+  } else {
+    tasks.splice(taskIndex, 1);
+    // Mostrar la lista de tareas actualizada después de eliminar una tarea
+    res.json({ message: "Tarea eliminada con éxito" });
+  }
+});
+
+// Ruta para actualizar una tarea por ID (PUT)
+router.put("/:id", (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const taskIndex = tasks.findIndex((task) => task.id === taskId);
+
+  if (taskIndex === -1) {
+    res.status(404).json({ message: "Tarea no encontrada" });
+  } else {
     const updatedTask = req.body;
-    const index = tasks.findIndex((task) => task.id === taskId);
+    tasks[taskIndex] = { ...tasks[taskIndex], ...updatedTask };
+    // Mostrar la lista de tareas actualizada después de actualizar una tarea
+    res.json({ message: "Tarea actualizada con éxito" });
+  }
+});
 
-    if (index !== -1) {
-      tasks[index] = { ...tasks[index], ...updatedTask };
-      res.send("Tarea actualizada correctamente");
-    } else {
-      res.status(404).send("Tarea no encontrada");
-    }
-  });
-
-  return router;
-};
+module.exports = router;
