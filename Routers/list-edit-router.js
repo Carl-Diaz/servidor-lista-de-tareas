@@ -1,76 +1,68 @@
-const manejarErroresListEditRouter = (req, res, next) => {
-  if (req.method === "POST" && !req.body) {
-    return res
-      .status(400)
-      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para POST.");
-  }
+const tasks = require("../script");
+const express = require("express");
+const router = express.Router();
 
-  const { id, description, completed } = req.body;
-  if (
-    req.method === "POST" &&
-    (!id || !description || completed === undefined)
-  ) {
-    return res
-      .status(400)
-      .send(
-        "Solicitud incorrecta: Atributos inválidos o faltantes para crear tareas."
-      );
-  }
+// Ruta para crear una tarea (POST)
+router.post("/", (req, res, next) => {
+  const newTask = req.body;
 
-  if (req.method === "PUT" && !req.body) {
-    return res
-      .status(400)
-      .send("Solicitud incorrecta: Cuerpo de la solicitud vacío para PUT.");
-  }
+  // Verifica si "description" y "completed" están presentes en el cuerpo de la solicitud
+  if (!newTask || !newTask.description || !newTask.completed) {
+    next(new Error("Cuerpo vacío o atributos faltantes"));
+  } else {
+    // Agrega el "id" arriba en el objeto
+    newTask.id = tasks.length + 1;
 
-  if (req.method === "PUT" && Object.keys(req.body).length === 0) {
-    return res
-      .status(400)
-      .send(
-        "Solicitud incorrecta: Atributos inválidos o faltantes para actualizar tareas."
-      );
-  }
-
-  next();
-};
-
-module.exports = (tasks) => {
-  router.post("/", (req, res) => {
-    // Lógica para crear una nueva tarea
-    const { id, description, completed } = req.body;
-    const newTask = { id, description, completed };
+    // Agrega la nueva tarea a la lista
     tasks.push(newTask);
-    res.send("Nueva tarea creada");
-  });
+    res.json({ message: "Tarea creada con éxito", task: newTask });
+  }
+});
 
-  router.delete("/:id", (req, res) => {
-    // Lógica para eliminar una tarea por su ID
-    const taskId = parseInt(req.params.id);
-    const index = tasks.findIndex((task) => task.id === taskId);
-    if (index !== -1) {
-      tasks.splice(index, 1);
-      res.send("Tarea eliminada correctamente");
-    } else {
-      res.status(404).send("Tarea no encontrada");
-    }
-  });
+// Ruta para actualizar una tarea por ID (PUT)
+router.put("/:id", (req, res, next) => {
+  const taskId = parseInt(req.params.id);
+  const taskIndex = tasks.findIndex((task) => task.id === taskId);
 
-  router.put("/:id", (req, res) => {
-    // Lógica para actualizar una tarea por su ID
-    const taskId = parseInt(req.params.id);
+  if (taskIndex === -1) {
+    res.status(404).json({ message: "Tarea no encontrada" });
+  } else {
     const updatedTask = req.body;
-    const index = tasks.findIndex((task) => task.id === taskId);
 
-    if (index !== -1) {
-      tasks[index] = { ...tasks[index], ...updatedTask };
-      res.send("Tarea actualizada correctamente");
+    // Verifica si "description" y "completed" están presentes en el cuerpo de la solicitud
+    if (!updatedTask || !updatedTask.description || !updatedTask.completed) {
+      next(new Error("Cuerpo vacío o atributos faltantes"));
     } else {
-      res.status(404).send("Tarea no encontrada");
+      // Agrega el "id" arriba en el objeto
+      updatedTask.id = taskId;
+
+      // Actualiza la tarea en la lista
+      tasks[taskIndex] = updatedTask;
+      res.json({ message: "Tarea actualizada con éxito" });
     }
-  });
+  }
+});
 
-  // Aplicar el middleware de manejo de errores
-  router.use(manejarErroresListEditRouter);
+// Ruta para eliminar una tarea por ID (DELETE)
+router.delete("/:id", (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const taskIndex = tasks.findIndex((task) => task.id === taskId);
 
-  return router;
-};
+  if (taskIndex === -1) {
+    res.status(404).json({ message: "Tarea no encontrada" });
+  } else {
+    tasks.splice(taskIndex, 1);
+    res.json({ message: "Tarea eliminada con éxito" });
+  }
+});
+
+// Middleware para manejar errores
+router.use((err, req, res, next) => {
+  if (err) {
+    res.status(400).json({ error: err.message });
+  } else {
+    next();
+  }
+});
+
+module.exports = router;
